@@ -11,6 +11,8 @@
             <a href="index.php">Image</a>
             <ul>
                 <li><a href="add.php">New Post</a></li>
+                <li><a href="register.php">Sign Up</a></li>
+                <li><a href="login.php">Login</a></li>
             </ul>
         </div>
     </nav>

@@ -7,20 +7,25 @@
     $target_file = $target_dir . $file_name;
     $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
 
-    $title = mysqli_real_escape_string($conn, $_POST["title"]);
+    // $title = mysqli_real_escape_string($conn, $_POST["title"]);
 
     if(isset($_POST["submit"]) && !empty($_FILES["image"]["name"])) {
         $allowTypes = array('jpg', 'jpeg', 'png');
         if (in_array($imageFileType, $allowTypes)) {
             if ($_FILES["image"]["size"] < 500000) {
                 if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
-                    $insert = $conn -> query("INSERT INTO images (file_name, title, uploaded_on) VALUES ('$target_file', '$title' , NOW())");
-                    $id = mysqli_insert_id($conn);
-                    if ($insert) {
-                        header('location: details.php?id=' . $id);
+                    if (isset($_GET['album'])) {
+                        $album_id = $_GET['album'];
                     } else {
-                        echo "Upload Failed";
+                        $insert_album = $conn -> query("INSERT INTO albums (created) VALUE (NOW())");
+                        $album_id = mysqli_insert_id($conn);
                     }
+                    $insert_image = $conn -> query("INSERT INTO images (file_name, album_id) VALUES ('$target_file', '$album_id')");
+                    if ($insert_image) {
+                        header('location: details.php?album=' . $album_id);
+                    } else {
+                        echo "Update failed";
+                        }
                 } else {
                     echo "Error uploading file";
                 }
@@ -32,12 +37,4 @@
         }
     } else {
         echo "Select Image";
-    }
-
-    if ($_FILES["image"]["size"] > 500000) {
-        echo "Image too large";
-    }
-
-    if ($imageFileType !== "jpg" && $imageFileType !== "png" && $imageFileType !== "jpeg") {
-        echo "Only JPG, JPEG, and PNG formats allowed.";
     }
