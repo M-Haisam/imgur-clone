@@ -1,5 +1,11 @@
 <?php
 
+    session_start();
+
+    if (isset($_SESSION["albumID"])) {
+        unset($_SESSION["albumID"]);
+    }
+
     include('dbConfig.php');
     
     $query = $conn -> query("SELECT * FROM images");

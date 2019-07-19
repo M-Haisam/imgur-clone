@@ -2,7 +2,14 @@
 
         include('dbConfig.php');
 
-        $album_id = mysqli_real_escape_string($conn, $_GET['album']);
+        session_start();
+
+        $loginBool = (isset($_SESSION["loggedIn"]) && $_SESSION["loggedIn"] === true) ? true : false;
+        // echo $loginBool;
+
+        if (isset($_SESSION["albumID"])) {
+            $album_id = $_SESSION["albumID"];
+        }
 
         // Deleting an image
         if (isset($_POST['delete'])) {
@@ -19,6 +26,7 @@
                     header('Location: details.php?album='. $album_id);
                 } else {
                     $delete = $conn -> query("DELETE FROM albums WHERE album_id = $album_id");
+                    unset($_SESSION["albumID"]);
                     header('Location: index.php');
                 }
             } else {
@@ -29,8 +37,12 @@
         // Displaying images
         if (isset($_GET['album'])) {
             
-            $action = "details.php?album=" . $_GET['album'];
+            // $action = "details.php?album=" . $_GET['album'];
             // echo $album_id;
+            $album_id = mysqli_real_escape_string($conn, $_GET['album']);
+
+            $_SESSION["albumID"] = $album_id;
+
             $sql = "SELECT images.id, images.file_name, images.description, albums.created FROM images JOIN albums ON images.album_id = $album_id AND albums.album_id = $album_id";
                 
             $result = mysqli_query($conn, $sql);
@@ -57,21 +69,22 @@
 
                 ?>  
                     <img src="<?php echo $imageURL; ?>" />
-                    <form action="<?php echo $action; ?>" method="POST">
+
+        <?php
+            if ($loginBool) { ?>
+                    <form action="details.php" method="POST">
                         <input type="hidden" name="image_id" value="<?php echo $imageID; ?>">
                         <input type="submit" name="delete" value="Delete">
                     </form>
-                            
+            <?php } ?>
 
-        <?php
-
-            } ?>  
+        <?php } ?>  
 
             <p><?php echo $albumCreated; ?></p>
             
         <?php
         } else {
-            echo "Wrong page";
+            echo "The page you are looking for doesn't exist";
         }
 
 
@@ -83,8 +96,10 @@
 
     ?>
 
-        <a href="add.php?album=<?php echo $album_id; ?>">Add Image</a>
-
+    <?php
+        if ($loginBool) { ?>
+            <a href="add.php">Add Image</a>
+    <?php } ?>
             
     </div>
 

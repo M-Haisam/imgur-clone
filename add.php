@@ -1,5 +1,12 @@
 <?php 
 
+    session_start();
+
+    if (!isset($_SESSION["loggedIn"]) || $_SESSION["loggedIn"] !== true) {
+        header("location: login.php");
+    }
+
+
     if (isset($_GET['album'])) {
         // if (empty($_POST['image'])) {
         //     echo "Image is required";
@@ -24,7 +31,7 @@
 
     <section>
         <h4>Upload Image</h4>
-        <form action=<?php echo $action; ?> method="POST" enctype="multipart/form-data">
+        <form action="upload.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="MAX_FILE_SIZE" value="500000">
             <input type="file" name="image" accept="image/png, image/jpeg" required>
             

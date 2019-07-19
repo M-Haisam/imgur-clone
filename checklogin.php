@@ -7,7 +7,9 @@
 
     $sql = "SELECT username, password FROM users WHERE username = '$username' and password = '$password'";
 
-    $result = mysql_query($sql);
+    if ($conn -> query($sql) === true) {
+        
+    }
 
     $count = mysql_num_rows($result);
 
