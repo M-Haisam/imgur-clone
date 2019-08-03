@@ -4,15 +4,17 @@
 
         session_start();
 
-        $loginBool = (isset($_SESSION["loggedIn"]) && $_SESSION["loggedIn"] === true) ? true : false;
+        // $loginBool = (isset($_SESSION["loggedIn"]) && $_SESSION["loggedIn"] === true) ? true : false;
         // echo $loginBool;
 
-        if (isset($_SESSION["albumID"])) {
-            $album_id = $_SESSION["albumID"];
-        }
-
-        // Deleting an image
+        
+        // Delete an image
         if (isset($_POST['delete'])) {
+
+            if (isset($_SESSION["albumID"])) {
+                $album_id = $_SESSION["albumID"];
+            }
+
             $deleteID = mysqli_real_escape_string($conn, $_POST['image_id']);
             
             $sql = "DELETE FROM images WHERE id = $deleteID";
@@ -34,7 +36,7 @@
             }
         }
 
-        // Displaying images
+        // Display images
         if (isset($_GET['album'])) {
             
             // $action = "details.php?album=" . $_GET['album'];
@@ -43,13 +45,38 @@
 
             $_SESSION["albumID"] = $album_id;
 
-            $sql = "SELECT images.id, images.file_name, images.description, albums.created FROM images JOIN albums ON images.album_id = $album_id AND albums.album_id = $album_id";
+            if (isset($_SESSION["loggedIn"]) && $_SESSION["loggedIn"] === true) {
+                $sql = "SELECT user_id FROM albums WHERE album_id = $album_id";
+                $result = $conn -> query($sql);
+    
+                if ($result -> num_rows > 0) {
+                    while ($row = $result -> fetch_assoc()) {
+                        $userID = $row["user_id"];
+                        // echo $userID;
+                    }
+                    if ($userID == $_SESSION["id"]) {
+                        $userVerified = true;
+                        // echo $userVerified;
+                    } else {
+                        $userVerified = false;
+                        // echo $userVerified;
+                    }
+                } else {
+                    echo "No results for users";
+                }
+            }
+
+            $sql = "SELECT images.id, images.file_name, images.description, albums.title, albums.created FROM images JOIN albums ON images.album_id = $album_id AND albums.album_id = $album_id";
                 
             $result = mysqli_query($conn, $sql);
             
 
 ?>
 
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+			integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+			crossorigin="anonymous"></script>
+<script src="ajax.js"></script>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -57,33 +84,70 @@
     <?php include('templates/header.php'); ?>
 
     <div>
-
+            
         <?php
+            
+            $i = 0;
 
             if (mysqli_num_rows($result) > 0) {
-                while($row = mysqli_fetch_assoc($result)) {
+                while ($row = mysqli_fetch_assoc($result)) {
+                    $albumTitle = $row["title"];
+                    $albumCreated = $row["created"];
                     $imageID = $row["id"];
                     $imageURL = $row["file_name"];
                     $imageDescription = $row["description"];
-                    $albumCreated = $row["created"];
+                    
 
-                ?>  
-                    <img src="<?php echo $imageURL; ?>" />
+        // Display/Edit title
+                if (isset($userVerified) && $userVerified) {    
+                    if (!$i++) { ?>
 
+                        <input type="text" class="title" id="<?php echo $album_id; ?>" placeholder="Add a title" value="<?php echo $albumTitle; ?>">   
+
+        <?php      } 
+
+                } else { ?>
+
+                        <h3><?php echo $albumTitle; ?></h3>
+
+        <?php   } ?>
+
+
+
+            <img src="<?php echo $imageURL; ?>" />
+                    
+
+
+        <!-- Display/Edit description -->
+        <?php 
+                
+            if (isset($userVerified) && $userVerified) { ?>
+                        
+                <textarea name="description" class="description" id="<?php echo $imageID; ?>" placeholder="Add a description"><?php echo $imageDescription ?></textarea>
+                        
+        <?php } else { ?>
+            
+                <p><?php echo $imageDescription; ?> </p>
+
+        <?php } ?>
+        
+
+
+        <!-- Delete image -->
         <?php
-            if ($loginBool) { ?>
+            if (isset($userVerified) && $userVerified) { ?>
                     <form action="details.php" method="POST">
                         <input type="hidden" name="image_id" value="<?php echo $imageID; ?>">
                         <input type="submit" name="delete" value="Delete">
                     </form>
-            <?php } ?>
+        <?php } ?>
 
         <?php } ?>  
 
-            <p><?php echo $albumCreated; ?></p>
+
+        <p><?php echo $albumCreated; ?></p>
             
-        <?php
-        } else {
+        <?php } else {
             echo "The page you are looking for doesn't exist";
         }
 
@@ -97,7 +161,7 @@
     ?>
 
     <?php
-        if ($loginBool) { ?>
+        if (isset($userVerified) && $userVerified) { ?>
             <a href="add.php">Add Image</a>
     <?php } ?>
             
